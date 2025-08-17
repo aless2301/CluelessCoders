@@ -51,5 +51,3 @@ Para ejecutar este proyecto en tu propia máquina, sigue estos pasos:
 5.  *¡Abrir la aplicación!*
     Abre tu navegador y ve a http://localhost:3000/index.html (o la página que tenga el botón para ir al revisor).
 
-## 🔗 Enlaces
-
