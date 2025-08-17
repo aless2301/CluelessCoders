@@ -1,0 +1,352 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Revisor con IA - Future STEM Lab</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        /* --- ESTILOS VISUALES DE FUTURE STEM LAB --- */
+        body {
+            font-family: 'Poppins', sans-serif;
+            margin: 0;
+            padding: 40px 20px;
+            background: #f7f8fa;
+            color: #333;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 600px;
+        }
+        
+        h1 {
+            font-size: 2.8em;
+            margin-bottom: 15px;
+            color: #003080;
+            text-align: center;
+        }
+
+        p {
+            font-size: 1.1em;
+            color: #555;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .btn-regresar {
+            display: inline-block;
+            margin-bottom: 30px;
+            text-decoration: none;
+            color: #004aad;
+            font-weight: 600;
+            transition: color 0.3s ease;
+        }
+        .btn-regresar:hover {
+            color: #003080;
+            text-decoration: underline;
+        }
+
+        .revisor-card {
+            border-radius: 12px;
+            padding: 25px;
+            background: white;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        .revisor-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 6px 18px rgba(0,0,0,0.15);
+        }
+
+        #upload-form {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        #upload-label {
+            border: 2px dashed #e0e0e0;
+            border-radius: 8px;
+            padding: 30px;
+            text-align: center;
+            cursor: pointer;
+            transition: background-color 0.3s, border-color 0.3s;
+        }
+        #upload-label:hover {
+            border-color: #004aad;
+        }
+        #upload-label span {
+            color: #004aad;
+            font-weight: 600;
+        }
+        #image-file {
+            display: none;
+        }
+
+        #preview {
+            max-width: 100%;
+            margin-top: 15px;
+            border-radius: 5px;
+            display: none;
+            border: 1px solid #e0e0e0;
+        }
+
+        button {
+            background: #004aad;
+            color: white;
+            padding: 12px 18px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: background 0.3s ease;
+            font-size: 16px;
+        }
+        button:hover {
+            background: #003080;
+        }
+
+        #feedback {
+            margin-top: 20px;
+            padding: 25px;
+            border-radius: 12px;
+            background: white;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            white-space: pre-wrap;
+            line-height: 1.6;
+        }
+
+        /* Estilos para el nuevo formulario de nombre */
+        .approved-card {
+            margin-top: 20px;
+            padding: 25px;
+            border-radius: 12px;
+            background: white;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+        .approved-card label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+        }
+        .approved-card input[type="text"] {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 6px;
+            box-sizing: border-box; /* Para que el padding no afecte el ancho total */
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="container">
+        <h1>Revisor de Circuitos IA</h1>
+        <p>Sube una foto (JPG) de tu circuito para que la IA lo revise según las instrucciones.</p>
+
+        <a href="/index.html" class="btn-regresar">‹ Volver a la página principal</a>
+
+        <div class="revisor-card">
+            <form id="upload-form">
+                <label for="image-file" id="upload-label">
+                    <p>Haz clic aquí para <span>seleccionar tu imagen</span>.</p>
+                </label>
+                <input type="file" id="image-file" name="circuitoJpg" accept="image/jpeg" required>
+                
+                <img id="preview" alt="Vista previa de la imagen"/>
+                <button type="submit">Revisar Mi Circuito</button>
+            </form>
+        </div>
+
+        <div id="feedback">
+            Aquí aparecerá la retroalimentación de la IA...
+        </div>
+
+                <div id="approved-form" class="approved-card" style="display: none;">
+            <p style="text-align: center;">¡Felicitaciones! 🎉 Tu circuito ha sido aprobado.</p>
+            <p style="text-align: center;">Ingresa tu nombre y descarga tu diploma:</p>
+            <form id="name-form">
+                <label for="nombreUsuario">Nombre:</label>
+                <input type="text" id="nombreUsuario" name="nombreUsuario" required>
+                <button type="submit" style="width: 100%; margin-top: 15px;">Descargar Diploma</button>
+            </form>
+        </div>
+            </div>
+
+    <script>
+        const formUpload = document.getElementById('upload-form');
+        const formName = document.getElementById('name-form');
+        const divFeedback = document.getElementById('feedback');
+        const inputFile = document.getElementById('image-file');
+        const previewImage = document.getElementById('preview');
+        const uploadLabel = document.getElementById('upload-label');
+        const approvedForm = document.getElementById('approved-form');
+
+        // Muestra la vista previa de la imagen seleccionada
+        inputFile.addEventListener('change', () => {
+            const file = inputFile.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    previewImage.src = e.target.result;
+                    previewImage.style.display = 'block';
+                }
+                reader.readAsDataURL(file);
+                uploadLabel.querySelector('p').innerHTML = `Archivo: <span>${file.name}</span>`;
+            }
+        });
+
+        // Maneja el envío del formulario de la imagen
+        formUpload.addEventListener('submit', async (event) => {
+            event.preventDefault();
+            const formData = new FormData();
+            const imageFile = inputFile.files[0];
+            formData.append('circuitoJpg', imageFile);
+            divFeedback.innerText = "Analizando la imagen de tu circuito... Esto puede tardar un momento.";
+            previewImage.style.opacity = 0.5;
+
+            // Ocultar el formulario de nombre en cada nueva revisión
+            approvedForm.style.display = 'none';
+
+            try {
+                const response = await fetch('/revisar-circuito-jpg', {
+                    method: 'POST',
+                    body: formData,
+                });
+                if (!response.ok) {
+                    throw new Error("El servidor respondió con un error: " + response.status);
+                }
+                const data = await response.json();
+                divFeedback.innerText = data.feedback;
+
+                // LÓGICA CLAVE: Mostrar el formulario de nombre si la imagen fue aprobada
+                if (data.approved) {
+                    approvedForm.style.display = 'block';
+                }
+
+            } catch (error) {
+                console.error("Error:", error);
+                divFeedback.innerText = "¡Oh no! Hubo un problema al enviar o procesar la imagen.";
+            } finally {
+                previewImage.style.opacity = 1;
+            }
+        });
+
+        // --- FUNCION CLAVE: DIBUJAR EL DIPLOMA EN EL CANVAS ---
+        function generateDiploma(name) {
+            const canvas = document.createElement('canvas');
+            canvas.width = 1123; // Dimensiones A4 en 96dpi (orientación horizontal)
+            canvas.height = 794;
+            const ctx = canvas.getContext('2d');
+
+            const logo = new Image();
+            logo.src = '/logo.png'; // Asegúrate de que esta ruta sea correcta
+
+            logo.onload = () => {
+                // --- DISEÑO DEL DIPLOMA ---
+                
+                // Fondo con degradado
+                const gradient = ctx.createLinearGradient(0, 0, canvas.width, canvas.height);
+                gradient.addColorStop(0, '#e8f2ff');
+                gradient.addColorStop(1, '#f7f8fa');
+                ctx.fillStyle = gradient;
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+                // Borde decorativo
+                ctx.strokeStyle = '#004aad';
+                ctx.lineWidth = 15;
+                ctx.strokeRect(20, 20, canvas.width - 40, canvas.height - 40);
+
+                // Sombra para el texto principal
+                ctx.shadowColor = 'rgba(0,0,0,0.2)';
+                ctx.shadowBlur = 5;
+                ctx.shadowOffsetX = 3;
+                ctx.shadowOffsetY = 3;
+
+                // Título
+                ctx.fillStyle = '#003080';
+                ctx.font = 'bold 58px Poppins';
+                ctx.textAlign = 'center';
+                ctx.fillText('CERTIFICADO DE RECONOCIMIENTO', canvas.width / 2, 150);
+
+                // Texto de otorgamiento
+                ctx.shadowBlur = 0;
+                ctx.shadowOffsetX = 0;
+                ctx.shadowOffsetY = 0;
+                ctx.fillStyle = '#555555';
+                ctx.font = '28px Poppins';
+                ctx.fillText('Se otorga este diploma a:', canvas.width / 2, 250);
+
+                // Nombre del usuario
+                ctx.fillStyle = '#004aad';
+                ctx.font = 'bold 64px Poppins';
+                ctx.fillText(name.toUpperCase(), canvas.width / 2, 350);
+
+                // Mensaje final
+                ctx.fillStyle = '#555555';
+                ctx.font = '28px Poppins';
+                ctx.fillText('Por haber completado y aprobado el curso exitosamente', canvas.width / 2, 450);
+                ctx.fillText('demostrando un dominio excepcional en los temas.', canvas.width / 2, 490);
+
+                // Fecha
+                const today = new Date();
+                const dateString = today.toLocaleDateString('es-ES', { day: 'numeric', month: 'long', year: 'numeric' });
+                ctx.font = '20px Poppins';
+                ctx.fillText(`Expedido el ${dateString}`, canvas.width / 2, 600);
+
+                // Logo
+                const logoWidth = 150;
+                const logoHeight = (logo.height / logo.width) * logoWidth;
+                ctx.drawImage(logo, (canvas.width / 2) - (logoWidth / 2), 610, logoWidth, logoHeight);
+
+                // --- DESCARGAR LA IMAGEN DEL DIPLOMA ---
+                const link = document.createElement('a');
+                link.download = `Diploma_${name.replace(/\s/g, '_')}.png`;
+                link.href = canvas.toDataURL('image/png');
+                link.click();
+            };
+
+            // Manejar el error de carga del logo
+            logo.onerror = () => {
+                divFeedback.innerText = "Error: No se pudo cargar el logo 'logo.png'. Asegúrate de que el archivo exista en la misma carpeta del servidor.";
+            };
+        }
+
+        // --- Maneja el envío del nuevo formulario del nombre ---
+        formName.addEventListener('submit', async (event) => {
+            event.preventDefault();
+            const nombre = document.getElementById('nombreUsuario').value;
+            divFeedback.innerText = `Generando tu diploma, ${nombre}...`;
+
+            try {
+                // Envía el nombre al servidor (opcional, pero útil para registrar el logro)
+                const response = await fetch('/guardar-nombre', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ nombre: nombre })
+                });
+
+                if (response.ok) {
+                    divFeedback.innerText = `¡Tu logro ha sido registrado! Descargando tu diploma...`;
+                    // Llama a la función para dibujar y descargar el diploma
+                    generateDiploma(nombre);
+                    // Ocultar el formulario una vez enviado
+                    approvedForm.style.display = 'none';
+                } else {
+                    divFeedback.innerText = "Hubo un problema al guardar tu nombre.";
+                }
+            } catch (error) {
+                console.error("Error:", error);
+                divFeedback.innerText = "Hubo un error al conectar con el servidor.";
+            }
+        });
+    </script>
+</body>
+</html>
